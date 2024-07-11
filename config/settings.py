@@ -14,7 +14,7 @@ ALLOWED_HOSTS = ["*"]
 
 # CSRF
 # ------------------------------------------------------------------------------
-CSRF_TRUSTED_ORIGINS = ["http://localhost"]
+CSRF_TRUSTED_ORIGINS = ["https://qqpn2xxcu06h.share.zrok.io"]
 
 # Environment Helpers
 # ------------------------------------------------------------------------------
@@ -50,7 +50,9 @@ THIRD_PARTY_APPS = [
     # For Static files
 ]
 
-CUSTOM_APPS = []
+CUSTOM_APPS = [
+    "apps.slack_to_do",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
@@ -129,24 +131,24 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Api & Rest Framework
 # ------------------------------------------------------------------------------
-REST_FRAMEWORK = {
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ],
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
-    ),
-}
+# REST_FRAMEWORK = {
+#     "DEFAULT_PARSER_CLASSES": [
+#         "rest_framework.parsers.JSONParser",
+#         "rest_framework.parsers.FormParser",
+#         "rest_framework.parsers.MultiPartParser",
+#     ],
+#     "DEFAULT_RENDERER_CLASSES": [
+#         "rest_framework.renderers.JSONRenderer",
+#         "rest_framework.renderers.BrowsableAPIRenderer",
+#     ],
+#     "DEFAULT_PERMISSION_CLASSES": [
+#         "rest_framework.permissions.IsAuthenticated",
+#     ],
+#     "DEFAULT_AUTHENTICATION_CLASSES": (
+#         "rest_framework.authentication.SessionAuthentication",
+#         "rest_framework.authentication.TokenAuthentication",
+#     ),
+# }
 
 PASSWORD_RESET_TIMEOUT = 300
 
@@ -194,3 +196,8 @@ AWS_STORAGE_BUCKET_NAME = env.str("AWS_BUCKET_NAME")
 
 AWS_QUERYSTRING_AUTH = False
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+# slack
+# ------------------------------------------------------------------------------
+SLACK_BOT_TOKEN = env.str("SLACK_BOT_TOKEN", default="")
+SLACK_SIGNING_SECRET = env.str("SLACK_SIGNING_SECRET", default="")
