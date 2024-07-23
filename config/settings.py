@@ -14,7 +14,7 @@ ALLOWED_HOSTS = ["*"]
 
 # CSRF
 # ------------------------------------------------------------------------------
-CSRF_TRUSTED_ORIGINS = ["https://qqpn2xxcu06h.share.zrok.io"]
+CSRF_TRUSTED_ORIGINS = ["https://tsmoauxqemn8.share.zrok.io"]
 
 # Environment Helpers
 # ------------------------------------------------------------------------------
@@ -42,12 +42,9 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    # rest api
     "rest_framework",
     "rest_framework.authtoken",
-    # Phone Number Field
     "phonenumber_field",
-    # For Static files
 ]
 
 CUSTOM_APPS = [

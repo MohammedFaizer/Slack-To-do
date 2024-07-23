@@ -12,6 +12,5 @@ handler = SlackRequestHandler(app=app)
 
 class Slack_Events_Handler(APIView):
     def post(self, request):
-        print("got the fun")
-        print(f"Incoming request data: {request.body.decode('utf-8')}")
+        # print(f"Incoming request data: {request.body.decode('utf-8')}")
         return handler.handle(request)

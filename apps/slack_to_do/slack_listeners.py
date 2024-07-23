@@ -5,6 +5,7 @@ from slack_bolt import App
 from slack_sdk.errors import SlackApiError
 
 from .block_kit import app_home, modal_input
+from .helpers import fetch_blocks, fetch_user_blocks, handle_some_command
 from .models import SlackMessage, Task, Watcher
 
 logger = logging.getLogger(__name__)
@@ -16,104 +17,10 @@ app = App(
 )
 
 
-def fetch_blocks(channel_id, iscomplete=None):
-    tasks = Task.objects.filter(task_channel_id=channel_id, is_complete=iscomplete)
-    blocks = [
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*{tasks.count()} {'open' if not iscomplete else 'closed'} ticket(s) for channel <#{channel_id}>*",
-            },
-        },
-        {"type": "divider"},
-    ]
-    for task in tasks:
-        blocks.append(
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": (
-                        f"*Taskname:* {task.task_name}\n"
-                        f"*Assignee:* <@{task.task_assignee}>\n"
-                        f"*Due date:* {task.due_date}\n"
-                        f"*Channel ID:* <#{task.task_channel_id}>"
-                    ),
-                },
-            }
-        )
-        blocks.append(
-            {
-                "type": "actions",
-                "elements": [
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": "Complete"},
-                        "style": "primary",
-                        "value": str(task.id),
-                        "action_id": "complete_task",
-                    }
-                ],
-            }
-        )
-        blocks.append({"type": "divider"})
-    return blocks
-
-
-def fetch_user_blocks(user_id, iscomplete=None):
-    tasks = Task.objects.filter(task_assignee=user_id, is_complete=iscomplete)
-    blocks = [
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*{tasks.count()} {'open' if not iscomplete else 'closed'} ticket(s) for <#{user_id}>*",
-            },
-        },
-        {"type": "divider"},
-    ]
-    for task in tasks:
-        blocks.append(
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": (
-                        f"*Taskname:* {task.task_name}\n"
-                        f"*Assignee:* <@{task.task_assignee}>\n"
-                        f"*Due date:* {task.due_date}\n"
-                        f"*Channel ID:* <#{task.task_channel_id}>"
-                    ),
-                },
-            }
-        )
-        blocks.append(
-            {
-                "type": "actions",
-                "elements": [
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": "Complete"},
-                        "style": "primary",
-                        "value": str(task.id),
-                        "action_id": "complete_task_home",
-                    }
-                ],
-            }
-        ) if not iscomplete else None
-        blocks.append({"type": "divider"})
-    return blocks
-
-
 @app.event("app_home_opened")
-def update_home_tab(
-    client,
-    event,
-):
+def update_home_tab(client, event):
     try:
         client.views_publish(user_id=event["user"], view=app_home.payload)
-
         print("App Home updated successfully")
     except Exception as e:
         print(f"Error updating App Home: {e}")
@@ -136,21 +43,9 @@ def add_task_shortcut(ack, body, client):
     handle_some_command(body["trigger_id"], client)
 
 
-def handle_some_command(body, client):
-    try:
-        client.views_open(trigger_id=body, view=modal_input.payload)
-        print("Modal sent successfully")
-    except Exception as e:
-        print("This is error", e)
-
-
-#
-
-
 @app.view("task_submission")
 def task_view_submission(ack, body, view, client):
     ack()
-    print("FAAAAAAAAAAAAAAAAAAAAAAA")
     v = view["state"]["values"]
     title = v["TSK01"]["title_text_input-action"]["value"]
     due_date = v["TSK02"]["due_date-action"]["selected_date"]
@@ -158,7 +53,6 @@ def task_view_submission(ack, body, view, client):
     channel_id = v["TSK04"]["channel_select-action"]["selected_channel"]
     notes = v["TSK05"]["notes_plain_text_input-action"]["value"]
     watcher_list = v["TSK06"]["watcher_multi_users_select-action"]["selected_users"]
-    print(watcher_list)
     try:
         task = Task(
             task_name=title,
@@ -363,11 +257,6 @@ def handle_complete_task(ack, body, client):
                 for i in watchy:
                     client.chat_postMessage(
                         channel=i["slack_user_id"],
-                        # text=(
-                        # f"*✨<@{task.task_assignee}>* Just Completed the task : *{task.task_name}*\n"
-                        # f"*Assignee:* <@{task.task_assignee}>\t *Due date:* {task.due_date}\n"
-                        # f"*Project:* <#{task.task_channel_id}>\n"
-                        # ),
                         blocks=[
                             {
                                 "type": "section",
@@ -420,8 +309,7 @@ def openbtn_home_action(ack, body, client):
         client.views_publish(user_id=user_id, view=opened_tasks_payload)
         print(f"Updated home view for user {user_id} successfully.")
     except SlackApiError as e:
-        error_msg = f"Error updating home view: {e.response['error']}"
-        print(error_msg)  # Extend the list with new blocks
+        return f"Error updating home view: {e.response['error']}"
 
 
 @app.action("completebtn_home_action")
@@ -436,5 +324,4 @@ def completebtn_home_action(ack, body, client):
         client.views_publish(user_id=user_id, view=complete_tasks_payload)
         print(f"Updated home view for user {user_id} successfully.")
     except SlackApiError as e:
-        error_msg = f"Error updating home view: {e.response['error']}"
-        print(error_msg)  # Extend the list with new blocks
+        return f"Error updating home view: {e.response['error']}"
